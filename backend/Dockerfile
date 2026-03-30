@@ -15,5 +15,7 @@ COPY --from=build /app/target/*.jar app.jar
 # Expose port (Render automatically uses PORT env variable, defaulting to 8080)
 EXPOSE 8080
 
+ENV SPRING_PROFILES_ACTIVE=render
+
 # Command to run the application
 ENTRYPOINT ["java","-jar","app.jar"]
