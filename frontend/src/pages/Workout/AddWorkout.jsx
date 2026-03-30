@@ -80,7 +80,7 @@ const AddWorkout = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-textMuted mb-2 pl-1">Sets</label>
                             <div className="relative">
@@ -120,7 +120,7 @@ const AddWorkout = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-textMuted mb-2 pl-1">Weight (kg/lbs)</label>
                             <div className="relative">

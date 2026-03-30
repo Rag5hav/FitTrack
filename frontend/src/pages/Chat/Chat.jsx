@@ -119,7 +119,7 @@ const Chat = () => {
                             disabled={loading || !input.trim()}
                             className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold transition-colors flex items-center space-x-2 shadow-lg shadow-purple-500/20"
                         >
-                            <span>Send</span>
+                            <span className="hidden sm:inline">Send</span>
                             <Send size={18} />
                         </button>
                     </form>

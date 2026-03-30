@@ -2,12 +2,13 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Activity, Apple, TrendingUp, LogOut, User, MessageSquare } from 'lucide-react';
 import { logout, getCurrentUser } from '../../services/auth.service';
 
-const Sidebar = () => {
+const Sidebar = ({ onClose }) => {
     const navigate = useNavigate();
     const user = getCurrentUser();
 
     const handleLogout = () => {
         logout();
+        if (onClose) onClose();
         navigate('/login');
     };
 
@@ -32,6 +33,7 @@ const Sidebar = () => {
                     <NavLink
                         key={item.path}
                         to={item.path}
+                        onClick={onClose}
                         className={({ isActive }) =>
                             `flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
                                 isActive 
