@@ -25,6 +25,7 @@ public class Workout {
     private Integer sets;
     private Integer reps;
     private Double weight; // Weight used in kg or lbs
+    private Double effectiveVolume;
     
     @Column(nullable = false)
     private LocalDate date;

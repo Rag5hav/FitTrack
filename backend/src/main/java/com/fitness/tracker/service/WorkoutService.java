@@ -18,6 +18,7 @@ public class WorkoutService {
 
     private final WorkoutRepository workoutRepository;
     private final UserRepository userRepository;
+    private final AiSuggestionService aiSuggestionService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -28,11 +29,19 @@ public class WorkoutService {
     public WorkoutDTO addWorkout(WorkoutDTO workoutDTO) {
         User user = getCurrentUser();
         
+        Double effectiveVolume = aiSuggestionService.calculateEffectiveVolume(
+                workoutDTO.getExerciseName(),
+                workoutDTO.getSets(),
+                workoutDTO.getReps(),
+                workoutDTO.getWeight()
+        );
+        
         Workout workout = Workout.builder()
                 .exerciseName(workoutDTO.getExerciseName())
                 .sets(workoutDTO.getSets())
                 .reps(workoutDTO.getReps())
                 .weight(workoutDTO.getWeight())
+                .effectiveVolume(effectiveVolume)
                 .date(workoutDTO.getDate())
                 .user(user)
                 .build();
@@ -68,6 +77,7 @@ public class WorkoutService {
                 .sets(workout.getSets())
                 .reps(workout.getReps())
                 .weight(workout.getWeight())
+                .effectiveVolume(workout.getEffectiveVolume())
                 .date(workout.getDate())
                 .build();
     }

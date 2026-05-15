@@ -27,7 +27,7 @@ const Progress = () => {
                 // Process Workouts (Volume)
                 workoutsData.forEach(workout => {
                     const date = workout.date;
-                    const volume = workout.sets * workout.reps * workout.weight;
+                    const volume = workout.effectiveVolume || (workout.sets * workout.reps * workout.weight);
                     if (!aggregatedData[date]) {
                         aggregatedData[date] = { date, volume: 0, calories: 0 };
                     }

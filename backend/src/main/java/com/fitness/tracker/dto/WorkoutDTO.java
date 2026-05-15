@@ -29,6 +29,8 @@ public class WorkoutDTO {
     @Min(value = 0, message = "Weight cannot be negative")
     private Double weight;
     
+    private Double effectiveVolume;
+    
     @NotNull(message = "Date is required")
     private LocalDate date;
 }

@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AiSuggestionService {
 
-    @Value("${ai.gemini.api.key}")
-    private String geminiApiKey;
+    @Value("${ai.groq.api.key}")
+    private String groqApiKey;
 
     private final GoalRepository goalRepository;
     private final WorkoutRepository workoutRepository;
@@ -42,8 +42,8 @@ public class AiSuggestionService {
     }
 
     public String generateFitnessSuggestions() {
-        if (geminiApiKey == null || geminiApiKey.trim().isEmpty() || geminiApiKey.contains("YOUR_GEMINI_API_KEY_HERE")) {
-            return "AI Features are currently disabled because the Gemini API key is not configured. Please add your key to application.properties.";
+        if (groqApiKey == null || groqApiKey.trim().isEmpty() || groqApiKey.contains("YOUR_GROQ_API_KEY_HERE")) {
+            return "AI Features are currently disabled because the Groq API key is not configured. Please add your key to application.properties.";
         }
 
         User user = getCurrentUser();
@@ -61,7 +61,7 @@ public class AiSuggestionService {
 
         String prompt = buildPrompt(goal, recentWorkouts);
 
-        return callGeminiApi(prompt);
+        return callGroqApi(prompt);
     }
 
     private String buildPrompt(Goal goal, List<String> recentWorkouts) {
@@ -92,7 +92,7 @@ public class AiSuggestionService {
     }
 
     public Integer calculateDailyCalorieGoal(Goal goal) {
-        if (geminiApiKey == null || geminiApiKey.trim().isEmpty() || geminiApiKey.contains("YOUR_GEMINI_API_KEY_HERE")) {
+        if (groqApiKey == null || groqApiKey.trim().isEmpty() || groqApiKey.contains("YOUR_GROQ_API_KEY_HERE")) {
             return 2000; // Default fallback if no api key 
         }
 
@@ -105,7 +105,7 @@ public class AiSuggestionService {
         sb.append("\nPlease calculate a realistic and healthy daily calorie intake limit (in kcal) for this user to achieve their goal by the target date. Reply ONLY with an integer representing the exact daily calories (e.g. 2100). Do not provide any explanation or text.");
 
         try {
-            String responseText = callGeminiApi(sb.toString());
+            String responseText = callGroqApi(sb.toString());
             // The response should be just the number. Parse it.
             return Integer.parseInt(responseText.replaceAll("[^0-9]", ""));
         } catch (Exception e) {
@@ -115,8 +115,8 @@ public class AiSuggestionService {
     }
 
     public String chatWithAi(String userMessage) {
-        if (geminiApiKey == null || geminiApiKey.trim().isEmpty() || geminiApiKey.contains("YOUR_GEMINI_API_KEY_HERE")) {
-            return "AI Features are currently disabled because the Gemini API key is not configured.";
+        if (groqApiKey == null || groqApiKey.trim().isEmpty() || groqApiKey.contains("YOUR_GROQ_API_KEY_HERE")) {
+            return "AI Features are currently disabled because the Groq API key is not configured.";
         }
 
         User user = getCurrentUser();
@@ -139,11 +139,11 @@ public class AiSuggestionService {
 
         sb.append("\nUser query: ").append(userMessage);
 
-        return callGeminiApi(sb.toString());
+        return callGroqApi(sb.toString());
     }
 
     public Integer estimateCaloriesForFood(String foodDescription) {
-        if (geminiApiKey == null || geminiApiKey.trim().isEmpty() || geminiApiKey.contains("YOUR_GEMINI_API_KEY_HERE")) {
+        if (groqApiKey == null || groqApiKey.trim().isEmpty() || groqApiKey.contains("YOUR_GROQ_API_KEY_HERE")) {
             return null;
         }
 
@@ -153,7 +153,7 @@ public class AiSuggestionService {
         sb.append("Estimate the total calories for this food/meal. Reply ONLY with an integer representing the exact calories (e.g. 350). Do not provide any explanation.");
 
         try {
-            String responseText = callGeminiApi(sb.toString());
+            String responseText = callGroqApi(sb.toString());
             return Integer.parseInt(responseText.replaceAll("[^0-9]", ""));
         } catch (Exception e) {
             e.printStackTrace();
@@ -161,30 +161,56 @@ public class AiSuggestionService {
         }
     }
 
-    private String callGeminiApi(String prompt) {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
+    private String callGroqApi(String prompt) {
+        String url = "https://api.groq.com/openai/v1/chat/completions";
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(groqApiKey);
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("contents", new Object[]{
-                Map.of("parts", new Object[]{
-                    Map.of("text", prompt)
-                })
+            requestBody.put("model", "llama-3.3-70b-versatile");
+            requestBody.put("messages", new Object[]{
+                Map.of("role", "user", "content", prompt)
             });
 
             HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(requestBody), headers);
             String response = restTemplate.postForObject(url, entity, String.class);
 
             JsonNode rootNode = objectMapper.readTree(response);
-            JsonNode textNode = rootNode.path("candidates").get(0).path("content").path("parts").get(0).path("text");
+            JsonNode textNode = rootNode.path("choices").get(0).path("message").path("content");
             
             return textNode.asText();
         } catch (Exception e) {
             e.printStackTrace();
             return "Failed to generate AI suggestion. Please check your API key and connection: " + e.getMessage();
+        }
+    }
+
+    public Double calculateEffectiveVolume(String exerciseName, int sets, int reps, double weight) {
+        if (groqApiKey == null || groqApiKey.trim().isEmpty() || groqApiKey.contains("YOUR_GROQ_API_KEY_HERE")) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("You are a fitness calculation API. ");
+        sb.append("Calculate the Effective Volume for the workout: ").append(exerciseName)
+          .append(" with ").append(sets).append(" sets, ").append(reps).append(" reps, and ")
+          .append(weight).append(" weight.\n");
+        sb.append("The formula is: Effective Volume = (Sets * Reps * Weight) * E * R * T, where E is Exercise coefficient, R is Range-of-motion factor, and T is Intensity factor (RIR/RPE).\n");
+        sb.append("Estimate E, R, and T appropriately for this exercise and calculate the final Effective Volume.\n");
+        sb.append("Reply ONLY with a single numeric value (can be decimal) representing the final effective volume. Do not provide any explanation.");
+
+        try {
+            String responseText = callGroqApi(sb.toString());
+            // Extract the first number found (handling potential decimal point)
+            String numberStr = responseText.replaceAll("[^0-9.]", "");
+            if (numberStr.isEmpty()) return null;
+            return Double.parseDouble(numberStr);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }
